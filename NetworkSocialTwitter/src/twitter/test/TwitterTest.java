@@ -1,12 +1,20 @@
 package twitter.test;
 
+import twitter.db.TwitterDB;
+import twitter4j.TwitterException;
+
 public class TwitterTest {
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		TwitterDB d = new TwitterDB();
+		try {
+			System.out.println("Sarko a " + d.getNbAmis("NicolasSarkozy") + " amis");
+		} catch (TwitterException e) {
+			e.printStackTrace();
+		}
 
 	}
 
