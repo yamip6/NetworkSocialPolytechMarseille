@@ -16,6 +16,7 @@ import twitter4j.conf.ConfigurationBuilder;
  * 
  * @author yassine
  * Des lignes de codes liées à la base de données seront intégrées dans ces fonctions
+ * remplissage de la BD et obtention d'informations venant de la BD
  */
 public class TwitterDB {
 

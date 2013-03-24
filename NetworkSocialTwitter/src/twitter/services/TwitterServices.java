@@ -15,7 +15,9 @@ import twitter4j.conf.ConfigurationBuilder;
 /**
  * 
  * @author yassine
- * Des lignes de codes liées à la base de données seront intégrées dans ces fonctions
+ * Certaines fonctions nécessitent la modification de la JVM pour permettre à une collection
+ * de prendre plus de 2 Mo de données, important pour les comptes Twitter ayant une tonne 
+ * d'informations.
  */
 public class TwitterServices {
 
@@ -23,12 +25,21 @@ public class TwitterServices {
 	private ArrayList<ArrayList<String>> _amisDamis;
 	private Twitter						 _twitter;
 	
+	/**
+	 * 
+	 */
 	public TwitterServices () {
 		_amis 		= new ArrayList<String>();
 		_twitter   	= TwitterFactory.getSingleton();
 		_amisDamis 	= new ArrayList<ArrayList<String>>();
 	} // TwitterDB
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut savoir le nom et prénom
+	 * @return le nom et prénom du propriétaire du compte twitter
+	 * @throws TwitterException
+	 */
 	public String getIdentite (String account) throws TwitterException{
 		ResponseList<User> liste = _twitter.searchUsers(account, -1);
 		String identite = null;
@@ -38,6 +49,12 @@ public class TwitterServices {
 		return identite;
 	} // getIdentite ()
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut savoir la langue
+	 * @return la langue du propriétaire du compte twitter
+	 * @throws TwitterException
+	 */
 	public String getLangue (String account) throws TwitterException{
 		ResponseList<User> liste = _twitter.searchUsers(account, -1);
 		String langue = null;
@@ -47,6 +64,12 @@ public class TwitterServices {
 		return langue;
 	} // getLangue ()
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut savoir sa localisation
+	 * @return la localisation du propriétaire du compte twitter
+	 * @throws TwitterException
+	 */
 	public String getLocalisation (String account) throws TwitterException{
 		ResponseList<User> liste = _twitter.searchUsers(account, -1);
 		String localisation = null;
@@ -56,6 +79,12 @@ public class TwitterServices {
 		return localisation;
 	} // getLocalisation ()
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut connaître sa date de création
+	 * @return la date de création du compte twitter
+	 * @throws TwitterException
+	 */
 	public Date getDateCreation (String account) throws TwitterException{
 		ResponseList<User> liste = _twitter.searchUsers(account, -1);
 		Date date = null;
@@ -65,6 +94,12 @@ public class TwitterServices {
 		return date;
 	} // getLocalisation ()
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut savoir son nombre de followers
+	 * @return le nombre de followers du propriétaire du compte twitter
+	 * @throws TwitterException
+	 */
 	public int getNbFollowers (String account) throws TwitterException{
 		ResponseList<User> liste = _twitter.searchUsers(account, -1);
 		int follow = 0;
@@ -74,6 +109,12 @@ public class TwitterServices {
 		return follow;
 	} // getNbFollowers ()
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut savoir son nombre d'amis
+	 * @return le nombre d'amis du propriétaire du compte twitter
+	 * @throws TwitterException
+	 */
 	public int getNbAmis (String account) throws TwitterException{
 		ResponseList<User> liste = _twitter.searchUsers(account, -1);
 		int amis = 0;
@@ -83,6 +124,12 @@ public class TwitterServices {
 		return amis;
 	} // getNbAmis ()
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut savoir son nombre de favoris (tweets en l'occurence)
+	 * @return le nombre de favoris du propriétaire du compte twitter
+	 * @throws TwitterException
+	 */
 	public int getNbFavoris (String account) throws TwitterException{
 		ResponseList<User> liste = _twitter.searchUsers(account, -1);
 		int fav = 0;
@@ -92,6 +139,12 @@ public class TwitterServices {
 		return fav;
 	} // getNbFavoris ()
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut connaître ses 20 derniers tweets
+	 * @return les 20 derniers tweets du propriétaire du compte twitter
+	 * @throws TwitterException
+	 */
 	public ArrayList<String> get20LastTweets (String account) throws TwitterException {
 		ResponseList<Status> tweets = _twitter.getUserTimeline(account);
 		ArrayList<String> res = new ArrayList<String>();
@@ -101,6 +154,12 @@ public class TwitterServices {
 		return res;
 	} // get20LastTweets ()
 	
+	/**
+	 * 
+	 * @param account est le compte twitter dont on veut savoir sa liste d'amis
+	 * @return la liste d'amis du propriétaire du compte twitter
+	 * @throws TwitterException
+	 */
 	public ArrayList<String> getAmis (String account) throws TwitterException {
 		long cursor = -1; PagableResponseList<User> l = null;
 		do
@@ -114,15 +173,40 @@ public class TwitterServices {
 		return _amis;
 	} // getAmis ()
 	
-/*	public ArrayList<ArrayList<String>> getAmisDamis (String account) throws TwitterException {
-		PagableResponseList<User> l = _twitter.getFriendsList(account, -1);
-		for (User u : l){
-			_twitter.getFriendsIDs(u.getScreenName(), -1);
+	/**
+	 * Le premier élément de la matrice désigne l'ami de account. Les éléments qui suivent
+	 * sont les amis de l'ami de account. Exemple : les amis de x sont z,y. Les amis de z sont x,b
+	 * et les amis de y sont x,n. On aura donc [[z,x,b][y,x,n]]
+	 * @param account désigne le compte twitter de qui on veut obtenir sa liste d'amis d'amis
+	 * @return une matrice
+	 * @throws TwitterException
+	 */
+	public ArrayList<ArrayList<String>> getAmisDamis (String account) throws TwitterException {
+		PagableResponseList<User> l; ArrayList<String> tmp;
+		long cursor = -1; long cursor2;
+		do
+		{
+			l = _twitter.getFriendsList(account, cursor);
+			for (User u : l){
+				cursor2 = -1;
+				do
+				{
+					PagableResponseList<User> ll = _twitter.getFriendsList(u.getScreenName(), cursor2);
+					tmp = new ArrayList<String>();
+					tmp.add(u.getScreenName());
+					for (User uu : ll)
+						tmp.add(uu.getScreenName());	
+				}
+				while((cursor2 = l.getNextCursor()) != 0);
+				_amisDamis.add(tmp);
+			} // Si vous voulez réellement avoir toutes les informations d'un bloc, consulter la classe JSON
 		}
+		while((cursor  = l.getNextCursor()) != 0);
+		return _amisDamis;
 		
 	} // getAmisDamis ()
 	
-	public ArrayList<ArrayList<String>> getNbAmisDamis (String account) throws TwitterException {
+/*	public ArrayList<ArrayList<String>> getNbAmisDamis (String account) throws TwitterException {
 		PagableResponseList<User> l = _twitter.getFriendsList(account, -1);
 		for (User u : l){
 			u.getFriendsCount();
@@ -144,7 +228,7 @@ public class TwitterServices {
 			u.getFavouritesCount();
 		}
 		
-	} // getNbFavorisDamis ()
-	*/
+	} // getNbFavorisDamis ()*/
+	
 	
 }
