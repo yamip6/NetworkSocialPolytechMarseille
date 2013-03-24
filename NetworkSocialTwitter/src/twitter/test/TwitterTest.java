@@ -12,9 +12,7 @@ public class TwitterTest {
 	public static void main(String[] args) {
 		TwitterDB d = new TwitterDB();
 		try {
-			
-			d.getDateCreation("yamip6");
-			//System.out.println("Sarko a " + d.getNbAmis("NicolasSarkozy") + " amis");
+			System.out.println("Sarko a " + d.getNbAmis("NicolasSarkozy") + " amis");
 		} catch (TwitterException e) {
 			e.printStackTrace();
 		}

@@ -15,7 +15,7 @@ import twitter4j.conf.ConfigurationBuilder;
 /**
  * 
  * @author yassine
- *
+ * Des lignes de codes liées à la base de données seront intégrées dans ces fonctions
  */
 public class TwitterDB {
 
@@ -102,10 +102,15 @@ public class TwitterDB {
 	} // get20LastTweets ()
 	
 	public ArrayList<String> getAmis (String account) throws TwitterException {
-		PagableResponseList<User> l = _twitter.getFriendsList(account, -1);
-		for (User u : l){
-			_amis.add(u.getScreenName()); // avec leurs comptes à notre disposition, on peut tout savoir sur eux
-		} // Si vous voulez réellement avoir toutes les informations d'un bloc, consulter la classe JSON
+		long cursor = -1; PagableResponseList<User> l = null;
+		do
+		{
+			l = _twitter.getFriendsList(account, -1);
+			for (User u : l){
+				_amis.add(u.getScreenName()); // avec leurs comptes à notre disposition, on peut tout savoir sur eux
+			} // Si vous voulez réellement avoir toutes les informations d'un bloc, consulter la classe JSON
+		}
+		while((cursor = l.getNextCursor()) != 0);
 		return _amis;
 	} // getAmis ()
 	
